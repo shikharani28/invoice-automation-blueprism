@@ -1,0 +1,22 @@
+# Windows / temp
+Thumbs.db
+Desktop.ini
+*.tmp
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+
+# Excel temp files
+~$*.xlsx
+~$*.xls
+
+# BP / build artifacts (optional)
+*.bak
+*.old
