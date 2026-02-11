@@ -1,95 +1,219 @@
-# Invoice Processing Automation (Blue Prism)
+# Invoice Processing Automation (Blue Prism + Python)
 
 ## Overview
-This project demonstrates an end-to-end **Invoice Processing Automation** built using **Blue Prism**, following enterprise-grade RPA design principles.  
-The solution automates invoice intake, validation, posting to a target system, and operational reporting using a scalable, queue-driven architecture.
 
-**Objective:**  
-Reduce manual effort and errors in invoice processing by automating data validation, transaction handling, and reporting — using only sample data.
+This project demonstrates an end-to-end **Invoice Processing Automation** built using:
 
----
+- **Blue Prism** (Orchestration & UI Automation)
+- **Python (PyMuPDF)** for text-based PDF extraction
 
-## What this project demonstrates
-- Dispatcher / Worker design pattern
-- Blue Prism Work Queues with retry logic
-- Business vs System exception handling
-- Config-driven and scalable automation
-- UI automation against a simulated ERP system
-- Operational reporting for audit and monitoring
+The solution follows enterprise RPA design principles including:
+
+- Dispatcher–Worker architecture
+- Work Queue with retry logic
+- Structured Business vs System exception handling
+- Modular integration with external components
+- Clean separation of concerns
 
 ---
 
-## Architecture & Process Flow
+## Architecture Overview
 
 ![Architecture](docs/architecture.png)
 
-This automation follows the **Blue Prism Dispatcher–Worker pattern** with queue-based orchestration to ensure scalability, reliability, and clear exception handling.
+### High-Level Flow
 
-### 1. Input Layer
-- **Vendor Master (Excel)** for reference and validation
-- **Invoice data / documents** (sample only)
-- All inputs are mock or dummy data used for learning and portfolio purposes
-
-### 2. Dispatcher Process (Blue Prism)
-The Dispatcher prepares and orchestrates the workload:
-- Reads invoice input data
-- Validates schema and mandatory fields
-- Creates individual **queue items** for each invoice
-
-This separation ensures clean orchestration and supports parallel processing.
-
-### 3. Work Queue
-A Blue Prism Work Queue is used to manage transactions:
-- Enables **retry logic** for system exceptions
-- Tracks item status and tags
-- Supports scaling with multiple worker processes
-
-### 4. Worker Process (Blue Prism)
-The Worker performs transaction-level processing:
-- Applies **business rule validations**
-- Automates invoice posting using **UI automation**
-- Handles exceptions in a structured manner:
-  - **Business Exceptions** → validation failures, no retry
-  - **System Exceptions** → technical failures, retried via queue
-
-### 5. ERP Simulator
-To avoid dependency on a real ERP system, the automation interacts with a lightweight **HTML-based ERP simulator**:
-- Mimics invoice entry screens
-- Enables safe and repeatable UI automation
-- Contains no sensitive or real business data
-
-Location:
-- `docs/erp-simulator/invoice-form.html`
-
-### 6. Output & Reporting
-Processing results are captured in an **Excel output report**, providing:
-- Invoice status (Success / Failed)
-- Failure reason codes
-- Processing timestamps and duration
-
-This report supports monitoring, audit, and troubleshooting.
+1. Dispatcher scans input folder and creates queue items
+2. Worker processes each invoice transaction
+3. Worker calls external Python module for PDF extraction
+4. Extracted data is validated
+5. Invoice is posted to ERP Simulator
+6. Results are logged in output report
 
 ---
 
-## Exception Handling (Mini Flow)
+## Technology Stack
 
-```text
-                 Worker picks next queue item
-                              │
-                              ▼
-                 Process invoice + ERP UI
-                              │
-                 ┌────────────┴────────────┐
-                 │                         │
-                 ▼                         ▼
-              Success               Exception occurs
-                 │                         │
-     Mark Completed & Report       Classify exception
-                                           │
-                      ┌────────────────────┴────────────────────┐
-                      │                                         │
-                      ▼                                         ▼
-            Business Exception                          System Exception
-            (validation failure)                       (technical issue)
-                      │                                         │
-               No retry – report                     Retry via Work Queue
+| Component | Technology |
+|------------|------------|
+| Orchestration | Blue Prism |
+| PDF Extraction | Python (PyMuPDF) |
+| Queue Management | Blue Prism Work Queue |
+| ERP Target | HTML-based ERP Simulator |
+| Reporting | Excel Output |
+
+---
+
+## Hybrid Architecture Pattern
+
+This solution follows a modular integration approach:
+
+Blue Prism (Worker)
+↓
+Python Script (PDF Extraction)
+↓
+JSON Response
+↓
+Validation + ERP Posting
+
+
+Blue Prism handles:
+- Queue management
+- Exception routing
+- ERP automation
+- Reporting
+
+Python handles:
+- PDF text extraction
+- Field parsing
+- Structured JSON output
+
+---
+
+## PDF Extraction Module
+
+Located in:
+
+python/pdf_invoice_extract.py
+
+
+### Features
+
+- Extracts text from **text-based PDFs**
+- Parses:
+  - Invoice Number
+  - Invoice Date
+  - Due Date
+  - PO Number
+  - Vendor Name
+  - Subtotal
+  - Tax
+  - Total
+- Returns structured JSON
+- Supports exit codes for automation control
+
+### Limitation
+
+Only **text-based PDFs** (selectable text) are supported.  
+Scanned/image-based PDFs (OCR) are out of scope for this version.
+
+---
+
+## Installation
+
+### 1. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+
+How to Run
+Step 1 — Place Input PDFs
+sample-data/input/
+
+Step 2 — Run Dispatcher
+
+Scans input folder
+
+Creates queue items with PdfPath
+
+Step 3 — Run Worker
+
+For each queue item:
+
+Calls Python script
+
+Validates extracted fields
+
+Posts to ERP simulator
+
+Writes output report
+
+Marks item Completed or Exception
+
+Exception Handling Strategy
+Business Exceptions
+
+Raised when:
+
+Required fields missing
+
+Validation fails
+
+Vendor not found
+
+Total mismatch
+
+No retry.
+
+System Exceptions
+
+Raised when:
+
+Script execution fails
+
+File read error
+
+Unexpected runtime issue
+
+Retries handled via Work Queue configuration.
+
+invoice-automation-blueprism/
+├── blueprism/
+│   └── releases/
+├── docs/
+│   ├── architecture.png
+│   ├── runbook.md
+│   └── erp-simulator/
+├── sample-data/
+│   ├── input/
+│   └── output/
+├── python/
+│   ├── pdf_invoice_extract.py
+│   └── README.md
+├── README.md
+
+Design Highlights
+
+Modular architecture
+
+Clean separation of orchestration and parsing logic
+
+Production-style exception handling
+
+Reusable Python component
+
+Deterministic parsing (no AI dependency)
+
+Safe dummy data usage
+
+Why This Design
+
+This project demonstrates how RPA solutions can:
+
+Integrate with external components
+
+Delegate specialized processing to dedicated services
+
+Maintain scalability and maintainability
+
+Follow real-world enterprise patterns
+
+Notes
+
+All data used is sample/demo data
+
+No real ERP system is used
+
+ERP Simulator is HTML-based
+
+Designed for portfolio and learning purposes
+
+Author
+
+Shikha Rani
+Blue Prism Consultant
+
+
+
+
+
