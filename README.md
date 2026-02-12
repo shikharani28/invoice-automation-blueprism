@@ -26,6 +26,7 @@ The solution follows production-ready design principles including:
 
 ### Component Flow
 
+```
 Blue Prism Dispatcher
 ↓
 Blue Prism Worker
@@ -36,8 +37,7 @@ Structured JSON
 ↓
 Validation → ERP Posting → Reporting
 
-
----
+```
 
 ## Design Principles
 
@@ -110,10 +110,11 @@ sample-data/input/
 
 (Retry handled via Work Queue configuration)
 
----
+
 
 ## Repository Structure
 
+```
 invoice-automation-blueprism/
 ├── blueprism/
 │ └── releases/
@@ -130,8 +131,7 @@ invoice-automation-blueprism/
 ├── requirements.txt
 └── README.md
 
-
----
+```
 
 ## Documentation
 
